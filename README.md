@@ -36,4 +36,4 @@ ros2 run crack image_publisher
 4."c"ボタンをクリックすることで処理が終わり、"Output_Images"に画像が保存されます  
 
 ## 注意事項
-・フォルダのInput_Image、Output_Imageのパスはdetect.py、image_publisher.pyのコードを変えることで変えることができます
+・フォルダのInput_Image、Output_Imageのパスはdetect.py、image_publisher.pyのコードから変えることができます
