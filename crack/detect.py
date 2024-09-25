@@ -1,14 +1,12 @@
-# detect.py
 import cv2
 import numpy as np
 import os
 
 # グローバル変数
 points = []
-output_directory = "/home/ros/ros2_ws/src/crack/Output_Images"  # 保存先ディレクトリを指定してください
-
-# 最も長い線を保存するためのグローバル変数
-current_result_image = None
+output_directory = "/mnt/c/Users/motti/Desktop/Carck_ros2/Output_Images"  # 保存先ディレクトリを指定
+image_count = 1  # 画像番号の管理用変数
+current_result_image = None  # 最も長い線を保存するためのグローバル変数
 
 def click_event(event, x, y, flags, param):
     if event == cv2.EVENT_LBUTTONDOWN:
@@ -40,9 +38,9 @@ def extract_test_piece(image):
 
 def warp_perspective(image, points):
     pts1 = np.float32(points)
-    pts2 = np.float32([[0, 0], [720, 0], [720, 720], [0, 720]])  # 固定サイズにワープ
+    pts2 = np.float32([[0, 0], [480, 0], [480, 480], [0, 480]])  # 固定サイズにワープ
     matrix = cv2.getPerspectiveTransform(pts1, pts2)
-    warped_img = cv2.warpPerspective(image, matrix, (720, 720))
+    warped_img = cv2.warpPerspective(image, matrix, (480, 480))
     return warped_img
 
 def detect_and_measure_lines(img, canny_thresh1, canny_thresh2, max_line_gap, scale=20):
@@ -84,10 +82,20 @@ def create_trackbar(warped_img):
         update_image(warped_img)
         key = cv2.waitKey(1) & 0xFF
         if key == ord('c'):
-            save_image()  # 引数を渡さずに呼び出す
+            save_image()  # 画像保存処理を呼び出す
+            break
+        elif key == ord('0'):  # 0が押された場合
+            print("Process terminated by user pressing 0.")
+            exit_program()  # 強制終了関数を呼び出す
             break
 
     cv2.destroyAllWindows()
+
+def exit_program():
+    """全てのプロセスを終了するための関数"""
+    print("Exiting all processes...")
+    cv2.destroyAllWindows()
+    os._exit(0)  # プログラムを強制終了
 
 def update_image(warped_img):
     brightness = cv2.getTrackbarPos('Brightness', 'Warped Image') - 100
@@ -106,16 +114,17 @@ def update_image(warped_img):
     current_result_image = result_image
 
 def save_image():
-    global current_result_image
+    global current_result_image, image_count
     if current_result_image is not None:
         if not os.path.exists(output_directory):
             os.makedirs(output_directory)
-        file_name = os.path.join(output_directory, 'processed_image.png')
+        file_name = os.path.join(output_directory, f'processed_image{image_count}.png')  # 連番付きファイル名
         cv2.imwrite(file_name, current_result_image)
         print(f"Image saved to {file_name}")
+        image_count += 1  # 画像番号をインクリメント
     else:
         print("No image to save.")
 
 def resize_func(img):
-    resized_img = cv2.resize(img, (720, 720), interpolation=cv2.INTER_AREA)
+    resized_img = cv2.resize(img, (480, 480), interpolation=cv2.INTER_AREA)
     return resized_img
