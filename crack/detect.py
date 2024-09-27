@@ -1,23 +1,21 @@
-# detect.py
 import cv2
 import numpy as np
 import os
 
 # グローバル変数
 points = []
-output_directory = "/home/ros/ros2_ws/src/crack/Output_Images"  # 保存先ディレクトリを指定してください
-
-# 最も長い線を保存するためのグローバル変数
-current_result_image = None
+output_directory = "/mnt/c/Users/motti/Desktop/Carck_ros2/Output_Images"  # 保存先ディレクトリを指定
+image_count = 1  # 画像番号の管理用変数
+current_result_image = None  # 最も長い線を保存するためのグローバル変数
 
 def click_event(event, x, y, flags, param):
     if event == cv2.EVENT_LBUTTONDOWN:
-        if len(points) < 4:
+        if len(points) < 4: 
             points.append((x, y))
-            cv2.circle(param, (x, y), 5, (0, 255, 0), -1)
-            cv2.imshow("Image", param)
-            if len(points) == 4:
-                print("4 points selected:", points)
+            # cv2.circle(param, (x, y), 5, (0, 255, 0), -1)
+            # cv2.imshow("Image", param)
+            # if len(points) == 4:
+            #     print("4 points selected:", points)
 
 def extract_test_piece(image):
     global points
@@ -26,23 +24,35 @@ def extract_test_piece(image):
 
     # 画像を表示し、マウスコールバックを設定
     cv2.imshow("Image", resized_image)
+    # cv2.imshow("Image", image)
     cv2.setMouseCallback("Image", click_event, resized_image)
-    cv2.waitKey(0)
+    # cv2.setMouseCallback("Image", click_event, image)
+    # cv2.setMouseCallback("Image", click_event)
+    while len(points) < 4:
+        key=cv2.waitKey(1)  # 小さな待機時間で処理を継続する
+        if key==-1 and cv2.getWindowProperty("Image",cv2.WND_PROP_VISIBLE)<1:
+            raise ValueError("Closed Window!")
+
+    cv2.destroyAllWindows()
 
     if len(points) == 4:
         # 透視変換を実行
+        print(points)
         transformed_image = warp_perspective(resized_image, points)
+        # transformed_image = warp_perspective(image, points)
         cv2.imshow("Warped Image", transformed_image)
-        create_trackbar(transformed_image)
-        return transformed_image
+        result = create_trackbar(transformed_image)
+        return transformed_image,result
+
     else:
         raise ValueError("Four points are required for perspective conversion")
 
 def warp_perspective(image, points):
+    print(points)
     pts1 = np.float32(points)
-    pts2 = np.float32([[0, 0], [720, 0], [720, 720], [0, 720]])  # 固定サイズにワープ
+    pts2 = np.float32([[0, 0], [480, 0], [480, 480], [0, 480]])  # 固定サイズにワープ
     matrix = cv2.getPerspectiveTransform(pts1, pts2)
-    warped_img = cv2.warpPerspective(image, matrix, (720, 720))
+    warped_img = cv2.warpPerspective(image, matrix, (480, 480))
     return warped_img
 
 def detect_and_measure_lines(img, canny_thresh1, canny_thresh2, max_line_gap, scale=20):
@@ -52,6 +62,7 @@ def detect_and_measure_lines(img, canny_thresh1, canny_thresh2, max_line_gap, sc
 
     longest_line = None
     max_length = 0
+    length_cm = 0
 
     if lines is not None:
         for line in lines:
@@ -67,9 +78,9 @@ def detect_and_measure_lines(img, canny_thresh1, canny_thresh2, max_line_gap, sc
             length_cm = (max_length / img.shape[1]) * scale
             cv2.putText(img, f"Length: {length_cm:.2f} cm", (x1, y1 - 10),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 1, cv2.LINE_AA)
-            print(f"Longest line length in cm: {length_cm:.2f}")
+            # print(f"Longest line length in cm: {length_cm:.2f}")
 
-    return img
+    return img,length_cm
 
 def create_trackbar(warped_img):
     cv2.namedWindow('Warped Image')
@@ -81,13 +92,24 @@ def create_trackbar(warped_img):
     cv2.createTrackbar('Max Line Gap', 'Warped Image', 20, 150, lambda x: None)
 
     while True:
-        update_image(warped_img)
+        result = update_image(warped_img)
         key = cv2.waitKey(1) & 0xFF
         if key == ord('c'):
-            save_image()  # 引数を渡さずに呼び出す
+            # save_image()  # 画像保存処理を呼び出す
+            return result
+            break
+        elif key == ord('0'):  # 0が押された場合
+            print("Process terminated by user pressing 0.")
+            exit_program()  # 強制終了関数を呼び出す
             break
 
     cv2.destroyAllWindows()
+
+def exit_program():
+    """全てのプロセスを終了するための関数"""
+    print("Exiting all processes...")
+    cv2.destroyAllWindows()
+    os._exit(0)  # プログラムを強制終了
 
 def update_image(warped_img):
     brightness = cv2.getTrackbarPos('Brightness', 'Warped Image') - 100
@@ -97,7 +119,7 @@ def update_image(warped_img):
     max_line_gap = cv2.getTrackbarPos('Max Line Gap', 'Warped Image')
 
     temp_image = cv2.convertScaleAbs(warped_img, alpha=contrast, beta=brightness)
-    result_image = detect_and_measure_lines(temp_image.copy(), canny_threshold1, canny_threshold2, max_line_gap, scale=20)
+    result_image,result = detect_and_measure_lines(temp_image.copy(), canny_threshold1, canny_threshold2, max_line_gap, scale=20)
 
     cv2.imshow('Warped Image', result_image)
 
@@ -105,17 +127,20 @@ def update_image(warped_img):
     global current_result_image
     current_result_image = result_image
 
+    return result
+
 def save_image():
-    global current_result_image
+    global current_result_image, image_count
     if current_result_image is not None:
         if not os.path.exists(output_directory):
             os.makedirs(output_directory)
-        file_name = os.path.join(output_directory, 'processed_image.png')
+        file_name = os.path.join(output_directory, f'processed_image{image_count}.png')  # 連番付きファイル名
         cv2.imwrite(file_name, current_result_image)
         print(f"Image saved to {file_name}")
+        image_count += 1  # 画像番号をインクリメント
     else:
         print("No image to save.")
 
 def resize_func(img):
-    resized_img = cv2.resize(img, (720, 720), interpolation=cv2.INTER_AREA)
+    resized_img = cv2.resize(img, (480, 480), interpolation=cv2.INTER_AREA)
     return resized_img

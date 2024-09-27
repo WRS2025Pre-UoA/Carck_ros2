@@ -40,7 +40,7 @@ class ImageSubscriber(Node):
 
             # 処理後、ノードをシャットダウンするか、トピックからの購読を解除
             self.get_logger().info('Image processed successfully, shutting down node.')
-            self.destroy_node()  # 1つの画像を処理後にノードをシャットダウン
+            # self.destroy_node()  # 1つの画像を処理後にノードをシャットダウン
 
         except Exception as e:
             self.get_logger().error(f'Error processing image: {e}')
@@ -48,9 +48,13 @@ class ImageSubscriber(Node):
 def main(args=None):
     rclpy.init(args=args)
     node = ImageSubscriber()
-    rclpy.spin(node)
-    node.destroy_node()
-    rclpy.shutdown()
+    try:
+        rclpy.spin(node)  # ノードを継続的に実行して、次の画像を待つ
+    except KeyboardInterrupt:
+        pass  # Ctrl+Cで終了したときの処理
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
 
 if __name__ == '__main__':
     main()

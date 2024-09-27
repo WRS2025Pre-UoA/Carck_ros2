@@ -22,7 +22,8 @@ setup(
         'console_scripts': [
             'talker = crack.test_publisher:main',
             'image_publisher = crack.image_publisher:main',  # パッケージ名を小文字に変更
-            'image_subscriber = crack.image_subscriber:main',  # パッケージ名を小文字に変更
+            #'image_subscriber = crack.image_subscriber:main',  # パッケージ名を小文字に変更
+            'crack_subscriber = crack.crack_subscriber:main',  # パッケージ名を小文字に変更
         ],
     },
 )
