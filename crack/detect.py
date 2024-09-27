@@ -97,7 +97,6 @@ def create_trackbar(warped_img):
         if key == ord('c'):
             # save_image()  # 画像保存処理を呼び出す
             return result
-            break
         elif key == ord('0'):  # 0が押された場合
             print("Process terminated by user pressing 0.")
             exit_program()  # 強制終了関数を呼び出す

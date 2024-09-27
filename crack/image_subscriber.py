@@ -3,24 +3,24 @@ from rclpy.node import Node
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 import cv2
-from . import detect  # 相対インポート   
+import os
+from . import detect  # 相対インポート
 
 class ImageSubscriber(Node):
     def __init__(self):
         super().__init__('image_subscriber')
-        # 画像を受信するためのサブスクリプションを作成
         self.subscription = self.create_subscription(
             Image,
             'image_raw',
             self.listener_callback,
             10)
-        self.subscription  # 未使用の変数警告を防ぐ
         self.bridge = CvBridge()
-        self.image_received = False
-        self.image = None
-        self.get_logger().info('Image subscriber initialized.')
+        self.image_count = 1  # 画像のカウントを初期化
+        #self.output_dir = '/mnt/c/Users/motti/Desktop/Carck_ros2/Output_Images'  # 保存先ディレクトリ
+        #os.makedirs(self.output_dir, exist_ok=True)  # 保存先ディレクトリが存在しない場合は作成
 
     def listener_callback(self, msg):
+
         if self.image_received:
             # すでに画像が処理されている場合、以降の処理をスキップ
             return
@@ -45,6 +45,7 @@ class ImageSubscriber(Node):
         except Exception as e:
             self.get_logger().error(f'Error processing image: {e}')
 
+
 def main(args=None):
     rclpy.init(args=args)
     node = ImageSubscriber()
@@ -55,6 +56,7 @@ def main(args=None):
     finally:
         node.destroy_node()
         rclpy.shutdown()
+
 
 if __name__ == '__main__':
     main()
