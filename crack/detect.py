@@ -10,12 +10,12 @@ current_result_image = None  # 最も長い線を保存するためのグロー�
 
 def click_event(event, x, y, flags, param):
     if event == cv2.EVENT_LBUTTONDOWN:
-        if len(points) < 4:
+        if len(points) < 4: 
             points.append((x, y))
-            cv2.circle(param, (x, y), 5, (0, 255, 0), -1)
-            cv2.imshow("Image", param)
-            if len(points) == 4:
-                print("4 points selected:", points)
+            # cv2.circle(param, (x, y), 5, (0, 255, 0), -1)
+            # cv2.imshow("Image", param)
+            # if len(points) == 4:
+            #     print("4 points selected:", points)
 
 def extract_test_piece(image):
     global points
@@ -24,19 +24,31 @@ def extract_test_piece(image):
 
     # 画像を表示し、マウスコールバックを設定
     cv2.imshow("Image", resized_image)
+    # cv2.imshow("Image", image)
     cv2.setMouseCallback("Image", click_event, resized_image)
-    cv2.waitKey(0)
+    # cv2.setMouseCallback("Image", click_event, image)
+    # cv2.setMouseCallback("Image", click_event)
+    while len(points) < 4:
+        key=cv2.waitKey(1)  # 小さな待機時間で処理を継続する
+        if key==-1 and cv2.getWindowProperty("Image",cv2.WND_PROP_VISIBLE)<1:
+            raise ValueError("Closed Window!")
+
+    cv2.destroyAllWindows()
 
     if len(points) == 4:
         # 透視変換を実行
+        print(points)
         transformed_image = warp_perspective(resized_image, points)
+        # transformed_image = warp_perspective(image, points)
         cv2.imshow("Warped Image", transformed_image)
-        create_trackbar(transformed_image)
-        return transformed_image
+        result = create_trackbar(transformed_image)
+        return transformed_image,result
+
     else:
         raise ValueError("Four points are required for perspective conversion")
 
 def warp_perspective(image, points):
+    print(points)
     pts1 = np.float32(points)
     pts2 = np.float32([[0, 0], [480, 0], [480, 480], [0, 480]])  # 固定サイズにワープ
     matrix = cv2.getPerspectiveTransform(pts1, pts2)
@@ -50,6 +62,7 @@ def detect_and_measure_lines(img, canny_thresh1, canny_thresh2, max_line_gap, sc
 
     longest_line = None
     max_length = 0
+    length_cm = 0
 
     if lines is not None:
         for line in lines:
@@ -65,9 +78,9 @@ def detect_and_measure_lines(img, canny_thresh1, canny_thresh2, max_line_gap, sc
             length_cm = (max_length / img.shape[1]) * scale
             cv2.putText(img, f"Length: {length_cm:.2f} cm", (x1, y1 - 10),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 1, cv2.LINE_AA)
-            print(f"Longest line length in cm: {length_cm:.2f}")
+            # print(f"Longest line length in cm: {length_cm:.2f}")
 
-    return img
+    return img,length_cm
 
 def create_trackbar(warped_img):
     cv2.namedWindow('Warped Image')
@@ -79,11 +92,11 @@ def create_trackbar(warped_img):
     cv2.createTrackbar('Max Line Gap', 'Warped Image', 20, 150, lambda x: None)
 
     while True:
-        update_image(warped_img)
+        result = update_image(warped_img)
         key = cv2.waitKey(1) & 0xFF
         if key == ord('c'):
-            save_image()  # 画像保存処理を呼び出す
-            break
+            # save_image()  # 画像保存処理を呼び出す
+            return result
         elif key == ord('0'):  # 0が押された場合
             print("Process terminated by user pressing 0.")
             exit_program()  # 強制終了関数を呼び出す
@@ -105,13 +118,15 @@ def update_image(warped_img):
     max_line_gap = cv2.getTrackbarPos('Max Line Gap', 'Warped Image')
 
     temp_image = cv2.convertScaleAbs(warped_img, alpha=contrast, beta=brightness)
-    result_image = detect_and_measure_lines(temp_image.copy(), canny_threshold1, canny_threshold2, max_line_gap, scale=20)
+    result_image,result = detect_and_measure_lines(temp_image.copy(), canny_threshold1, canny_threshold2, max_line_gap, scale=20)
 
     cv2.imshow('Warped Image', result_image)
 
     # グローバル変数に現在の処理済み画像を保存
     global current_result_image
     current_result_image = result_image
+
+    return result
 
 def save_image():
     global current_result_image, image_count

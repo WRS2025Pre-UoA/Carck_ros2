@@ -20,36 +20,43 @@ class ImageSubscriber(Node):
         #os.makedirs(self.output_dir, exist_ok=True)  # 保存先ディレクトリが存在しない場合は作成
 
     def listener_callback(self, msg):
-        # 受信したROS ImageメッセージをOpenCV形式に変換
-        img = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
 
-        # 画像処理（線の長さを計測）
-        processed_image = detect.extract_test_piece(img)
+        if self.image_received:
+            # すでに画像が処理されている場合、以降の処理をスキップ
+            return
 
-        # 保存ファイル名を生成（例: processed_image1.png, processed_image2.png, ...）
-        #output_file = os.path.join(self.output_dir, f'processed_image{self.image_count}.png')
+        try:
+            # ROSのImageメッセージをOpenCVの画像に変換
+            cv_image = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
+            self.image_received = True
+            self.image = cv_image
 
-        # 処理済み画像を保存
-        #cv2.imwrite(output_file, processed_image)
-        #self.get_logger().info(f'Saved processed image as {output_file}')
-        
-        # カウントをインクリメント
-        #self.image_count += 1
+            # 画像を処理（点の抽出、ワープなど）
+            processed_image = detect.extract_test_piece(cv_image)
 
-        # 必要ならここでノードの終了処理を呼び出す
-        # self.destroy_node()
-        
-        # 0キーが押された場合にノードを終了
-        if cv2.waitKey(1) & 0xFF == ord('0'):
-            self.get_logger().info("Process terminated by user pressing 0.")
-            self.destroy_node()
-            rclpy.shutdown()
+            # 処理された画像を表示
+            # cv2.imshow('Processed Image', processed_image)
+            cv2.waitKey(1)
+
+            # 処理後、ノードをシャットダウンするか、トピックからの購読を解除
+            self.get_logger().info('Image processed successfully, shutting down node.')
+            # self.destroy_node()  # 1つの画像を処理後にノードをシャットダウン
+
+        except Exception as e:
+            self.get_logger().error(f'Error processing image: {e}')
+
 
 def main(args=None):
     rclpy.init(args=args)
     node = ImageSubscriber()
-    rclpy.spin(node)
-    rclpy.shutdown()
+    try:
+        rclpy.spin(node)  # ノードを継続的に実行して、次の画像を待つ
+    except KeyboardInterrupt:
+        pass  # Ctrl+Cで終了したときの処理
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
+
 
 if __name__ == '__main__':
     main()
