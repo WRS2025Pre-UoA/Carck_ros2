@@ -42,7 +42,7 @@ def extract_test_piece(image):
         # transformed_image = warp_perspective(image, points)
         cv2.imshow("Warped Image", transformed_image)
         result = create_trackbar(transformed_image)
-        return transformed_image,result
+        return current_result_image,result
 
     else:
         raise ValueError("Four points are required for perspective conversion")

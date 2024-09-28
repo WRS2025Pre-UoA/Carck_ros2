@@ -1,5 +1,6 @@
 import rclpy
 from rclpy.node import Node
+from std_msgs.msg import Float64
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge,CvBridgeError
 import cv2
@@ -14,6 +15,8 @@ class ImageSubscriber(Node):
             'image_raw',
             self.listener_callback,
             10)
+        self.image_publisher = self.create_publisher(Image, 'crack_result_image', 10)
+        self.value_publisher = self.create_publisher(Float64, 'crack_result_value', 10)
         self.bridge = CvBridge()
         self.image_count = 1  # 画像のカウントを初期化
         #self.output_dir = '/mnt/c/Users/motti/Desktop/Carck_ros2/Output_Images'  # 保存先ディレクトリ
@@ -49,6 +52,13 @@ class ImageSubscriber(Node):
             #     self.get_logger().info("Process terminated by user pressing 0.")
             #     self.destroy_node()
             #     rclpy.shutdown()
+            if result != None:
+                result_value = Float64()
+                result_value.data = result
+                self.value_publisher.publish(result_value)
+                ros_image = self.bridge.cv2_to_imgmsg(processed_image, 'bgr8')
+                self.image_publisher.publish(ros_image)
+
         except CvBridgeError as e:
             self.get_logger().error(f'Failed to convert image: {e}')
         except Exception as e:
