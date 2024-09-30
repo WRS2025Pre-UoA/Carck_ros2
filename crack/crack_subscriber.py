@@ -5,7 +5,7 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge,CvBridgeError
 import cv2
 import os
-from . import detect  # 相対インポート
+from crack import detect  # 相対インポート
 
 class ImageSubscriber(Node):
     def __init__(self):
