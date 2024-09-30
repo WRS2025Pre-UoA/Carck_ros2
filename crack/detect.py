@@ -91,16 +91,25 @@ def create_trackbar(warped_img):
     cv2.createTrackbar('Canny Thresh 2', 'Warped Image', 200, 500, lambda x: None)
     cv2.createTrackbar('Max Line Gap', 'Warped Image', 20, 150, lambda x: None)
 
+    # while True:
+        # result = update_image(warped_img)
+        # key = cv2.waitKey(1) & 0xFF
+        # if key == ord('c'):
+        #     # save_image()  # 画像保存処理を呼び出す
+        #     return result
+        # elif key == ord('0'):  # 0が押された場合
+        #     print("Process terminated by user pressing 0.")
+        #     exit_program()  # 強制終了関数を呼び出す
+        #     break
     while True:
-        result = update_image(warped_img)
+        update_image(warped_img)
         key = cv2.waitKey(1) & 0xFF
-        if key == ord('c'):
-            # save_image()  # 画像保存処理を呼び出す
-            return result
-        elif key == ord('0'):  # 0が押された場合
-            print("Process terminated by user pressing 0.")
-            exit_program()  # 強制終了関数を呼び出す
+        if key != 255:
+            # save_image()  # 引数を渡さずに呼び出す
             break
+
+    # cv2.destroyAllWindows()
+    # return current_result_image
 
     cv2.destroyAllWindows()
 
