@@ -5,7 +5,7 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge,CvBridgeError
 import cv2
 import os
-from crack import detect  # 相対インポート
+from . import detect  # 相対インポート
 
 class ImageSubscriber(Node):
     def __init__(self):
@@ -28,9 +28,10 @@ class ImageSubscriber(Node):
             img = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
 
             # 画像処理（線の長さを計測）
-            processed_image,result = detect.extract_test_piece(img)
+            processed_image,result,result2 = detect.extract_test_piece(img)
 
-            print(result)
+            print(f"Result: {result:.4f} mm")
+            print(f"Result: {result2:.4f} mm")
             cv2.imshow("result",processed_image)
             cv2.waitKey(0)
             cv2.destroyAllWindows()
