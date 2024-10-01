@@ -30,8 +30,8 @@ def extract_test_piece(image):
     # cv2.setMouseCallback("Image", click_event)
     while len(points) < 4:
         key=cv2.waitKey(1)  # 小さな待機時間で処理を継続する
-        if key==-1 and cv2.getWindowProperty("Image",cv2.WND_PROP_VISIBLE)<1:
-            raise ValueError("Closed Window!")
+        # if key==-1 and cv2.getWindowProperty("Image",cv2.WND_PROP_VISIBLE)==0:
+        #     raise ValueError("Closed Window!")
 
     cv2.destroyAllWindows()
 
@@ -44,8 +44,8 @@ def extract_test_piece(image):
         result = create_trackbar(transformed_image)
         return current_result_image,result
 
-    else:
-        raise ValueError("Four points are required for perspective conversion")
+    # else:
+    #     raise ValueError("Four points are required for perspective conversion")
 
 def warp_perspective(image, points):
     print(points)
