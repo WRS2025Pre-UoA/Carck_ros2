@@ -25,8 +25,8 @@ def extract_test_piece(image):
 
     while len(points) < 4:
         key = cv2.waitKey(1)  # 小さな待機時間で処理を継続する
-        if key == -1 and cv2.getWindowProperty("Image", cv2.WND_PROP_VISIBLE) < 1:
-            raise ValueError("Closed Window!")
+        # if key == -1 and cv2.getWindowProperty("Image", cv2.WND_PROP_VISIBLE) < 1:
+        #     raise ValueError("Closed Window!")
 
     cv2.destroyAllWindows()
 
@@ -35,11 +35,11 @@ def extract_test_piece(image):
         print(points)
         transformed_image = warp_perspective(resized_image, points)
         cv2.imshow("Warped Image", transformed_image)
-        result ,result2 = create_trackbar(transformed_image)
-        return current_result_image, result ,result2
+        result1 ,result2 = create_trackbar(transformed_image)
+        return current_result_image, result1 ,result2
 
-    else:
-        raise ValueError("Four points are required for perspective conversion")
+    # else:
+    #     raise ValueError("Four points are required for perspective conversion")
 
 def warp_perspective(image, points):
     print(points)
@@ -56,7 +56,7 @@ def detect_and_measure_lines(img, canny_thresh1, canny_thresh2, max_line_gap, sc
 
     longest_line = None
     max_length = 0
-    length_cm = 0
+    length_mm = 0
 
     if lines is not None:
         for line in lines:
@@ -72,13 +72,13 @@ def detect_and_measure_lines(img, canny_thresh1, canny_thresh2, max_line_gap, sc
             cv2.line(img, (x1, y1), (x2, y2), (0, 0, 255), int(line_thickness))  
             
             # 線の長さをmm単位で計算
-            length_cm = (max_length / img.shape[1]) * scale*10
+            length_mm = (max_length / img.shape[1]) * scale*10
             
             # 線の太さに基づくスケーリング
             scale_factor = line_thickness / 10.0  # mmをスケーリング
             
             # 線の長さを表示
-            cv2.putText(img, f"Length: {length_cm:.2f} mm", (x1, y1 - 10),
+            cv2.putText(img, f"Length: {length_mm:.2f} mm", (x1, y1 - 10),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 1, cv2.LINE_AA)
             cv2.putText(img, f"Thickness: {line_thickness:.1f} mm", (x1, y1 - 30),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 1, cv2.LINE_AA)
@@ -86,7 +86,7 @@ def detect_and_measure_lines(img, canny_thresh1, canny_thresh2, max_line_gap, sc
             # 線の長さをトラックバーの動きに応じて調整
             #length_cm *= scale_factor  # 線の太さに基づく調整
 
-    return img, length_cm ,line_thickness
+    return img, length_mm ,line_thickness
 
 
 

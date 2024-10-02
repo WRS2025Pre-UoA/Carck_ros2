@@ -1,6 +1,7 @@
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float64
+from std_msgs.msg import String
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge,CvBridgeError
 import cv2
@@ -16,7 +17,8 @@ class ImageSubscriber(Node):
             self.listener_callback,
             10)
         self.image_publisher = self.create_publisher(Image, 'crack_result_image', 10)
-        self.value_publisher = self.create_publisher(Float64, 'crack_result_value', 10)
+        # self.value_publisher = self.create_publisher(Float64, 'crack_result_value', 10)
+        self.value_publisher = self.create_publisher(String, 'crack_result_txt', 10)
         self.bridge = CvBridge()
         self.image_count = 1  # 画像のカウントを初期化
         #self.output_dir = '/mnt/c/Users/motti/Desktop/Carck_ros2/Output_Images'  # 保存先ディレクトリ
@@ -28,9 +30,9 @@ class ImageSubscriber(Node):
             img = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
 
             # 画像処理（線の長さを計測）
-            processed_image,result,result2 = detect.extract_test_piece(img)
+            processed_image,result1,result2 = detect.extract_test_piece(img)
 
-            print(f"Result: {result:.4f} mm")
+            print(f"Result: {result1:.4f} mm")
             print(f"Result: {result2:.4f} mm")
             cv2.imshow("result",processed_image)
             cv2.waitKey(0)
@@ -53,9 +55,11 @@ class ImageSubscriber(Node):
             #     self.get_logger().info("Process terminated by user pressing 0.")
             #     self.destroy_node()
             #     rclpy.shutdown()
-            if result != None:
-                result_value = Float64()
-                result_value.data = result
+            if result1 != None and result2 != None:
+                txt = str(result1)+","+str(result2)
+                # result_value = Float64()
+                result_value = String()
+                result_value.data = txt
                 self.value_publisher.publish(result_value)
                 ros_image = self.bridge.cv2_to_imgmsg(processed_image, 'bgr8')
                 self.image_publisher.publish(ros_image)
