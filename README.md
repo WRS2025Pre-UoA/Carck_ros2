@@ -37,3 +37,4 @@ ros2 run crack image_publisher
 
 ## 注意事項
 ・フォルダのInput_Image、Output_Imageのパスはdetect.py、image_publisher.pyのコードから変えることができます。
+
