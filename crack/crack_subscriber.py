@@ -32,11 +32,14 @@ class ImageSubscriber(Node):
             # 画像処理（線の長さを計測）
             processed_image,result1,result2 = detect.extract_test_piece(img)
 
-            print(f"Result: {result1:.4f} mm")
-            print(f"Result: {result2:.4f} mm")
-            cv2.imshow("result",processed_image)
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()
+            # cv2.putText(img, f"Length: {result1:.2f} mm", (x1, y1 - 10),
+            #             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 1, cv2.LINE_AA)
+            # cv2.putText(img, f"Thickness: {result2:.1f} mm", (x1, y1 - 30),
+            #             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 1, cv2.LINE_AA)
+
+            # print(f"Result: {result1:.4f} mm")
+            # print(f"Result: {result2:.4f} mm")
+            
             # 保存ファイル名を生成（例: processed_image1.png, processed_image2.png, ...）
             #output_file = os.path.join(self.output_dir, f'processed_image{self.image_count}.png')
 
@@ -55,13 +58,25 @@ class ImageSubscriber(Node):
             #     self.get_logger().info("Process terminated by user pressing 0.")
             #     self.destroy_node()
             #     rclpy.shutdown()
+
+            h,w = processed_image.shape[:2]
+            nw = 1280
+            aspect = w/h
+            nh = int(nw / aspect)
+            process_image = cv2.resize(processed_image,(nw,nh))
+
+            cv2.imshow("result",process_image)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
+            
             if result1 != None and result2 != None:
                 txt = str(result1)+","+str(result2)
                 # result_value = Float64()
                 result_value = String()
                 result_value.data = txt
                 self.value_publisher.publish(result_value)
-                ros_image = self.bridge.cv2_to_imgmsg(processed_image, 'bgr8')
+                ros_image = self.bridge.cv2_to_imgmsg(process_image, 'bgr8')#くり抜いた画像に結果も貼り付けた
+                # ros_image = self.bridge.cv2_to_imgmsg(img, 'bgr8')#提出を元画像に結果を貼り付けた
                 self.image_publisher.publish(ros_image)
 
         except CvBridgeError as e:

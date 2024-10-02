@@ -77,7 +77,7 @@ def detect_and_measure_lines(img, canny_thresh1, canny_thresh2, max_line_gap, sc
             # 線の太さに基づくスケーリング
             scale_factor = line_thickness / 10.0  # mmをスケーリング
             
-            # 線の長さを表示
+            # # 線の長さを表示
             cv2.putText(img, f"Length: {length_mm:.2f} mm", (x1, y1 - 10),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 1, cv2.LINE_AA)
             cv2.putText(img, f"Thickness: {line_thickness:.1f} mm", (x1, y1 - 30),
