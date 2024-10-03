@@ -6,7 +6,8 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge,CvBridgeError
 import cv2
 import os
-from . import detect  # 相対インポート
+from crack import detect  # 相対インポート
+from crack import crack_input
 
 class ImageSubscriber(Node):
     def __init__(self):
@@ -32,6 +33,7 @@ class ImageSubscriber(Node):
             # 画像処理（線の長さを計測）
             processed_image,result1,result2 = detect.extract_test_piece(img)
 
+            areaID = crack_input.input_txt()
             # cv2.putText(img, f"Length: {result1:.2f} mm", (x1, y1 - 10),
             #             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 1, cv2.LINE_AA)
             # cv2.putText(img, f"Thickness: {result2:.1f} mm", (x1, y1 - 30),
@@ -70,7 +72,7 @@ class ImageSubscriber(Node):
             cv2.destroyAllWindows()
             
             if result1 != None and result2 != None:
-                txt = str(result1)+","+str(result2)
+                txt = str(result1)+","+str(result2)+","+areaID
                 # result_value = Float64()
                 result_value = String()
                 result_value.data = txt
