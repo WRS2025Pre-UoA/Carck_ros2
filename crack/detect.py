@@ -41,13 +41,27 @@ def extract_test_piece(image):
     # else:
     #     raise ValueError("Four points are required for perspective conversion")
 
+def sort_points(points):
+    # x座標とy座標を分ける
+    points = sorted(points, key=lambda point: (point[1], point[0]))  # y座標でソートし、yが同じならxでソート
+
+    # 左上と右上、左下と右下に分類
+    top_points = sorted(points[:2], key=lambda point: point[0])  # 上の2点はx座標でソート
+    bottom_points = sorted(points[2:], key=lambda point: point[0])  # 下の2点もx座標でソート
+
+    # 順序を [左上、右上、右下、左下] にする
+    return [top_points[0], top_points[1], bottom_points[1], bottom_points[0]]
+
 def warp_perspective(image, points):
-    print(points)
-    pts1 = np.float32(points)
+    # 選択された4点をソートして、順序を [左上, 右上, 右下, 左下] にする
+    sorted_points = sort_points(points)
+    print(sorted_points)
+    pts1 = np.float32(sorted_points)
     pts2 = np.float32([[0, 0], [480, 0], [480, 480], [0, 480]])  # 固定サイズにワープ
     matrix = cv2.getPerspectiveTransform(pts1, pts2)
     warped_img = cv2.warpPerspective(image, matrix, (480, 480))
     return warped_img
+
 
 def detect_and_measure_lines(img, canny_thresh1, canny_thresh2, max_line_gap, scale=20):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
